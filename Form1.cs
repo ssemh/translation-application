@@ -15,6 +15,17 @@ namespace TranslateApp
             translationService = new TranslationService();
             InitializeLanguages();
             LoadLanguages();
+            SetupButtonStyles();
+        }
+
+        private void SetupButtonStyles()
+        {
+            // Disabled button styling
+            translateButton.FlatAppearance.MouseOverBackColor = translateButton.BackColor;
+            translateButton.FlatAppearance.MouseDownBackColor = translateButton.BackColor;
+            
+            // Update button state to apply disabled styling
+            UpdateTranslateButtonState();
         }
 
         private void InitializeLanguages()
@@ -76,6 +87,20 @@ namespace TranslateApp
                                sourceLanguageCombo.SelectedItem.ToString() != targetLanguageCombo.SelectedItem.ToString();
             
             translateButton.Enabled = canTranslate;
+            
+            // Update button appearance based on state
+            if (canTranslate)
+            {
+                translateButton.BackColor = System.Drawing.Color.FromArgb(25, 118, 210);
+                translateButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(21, 101, 192);
+                translateButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(13, 71, 161);
+            }
+            else
+            {
+                translateButton.BackColor = System.Drawing.Color.FromArgb(189, 189, 189);
+                translateButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(189, 189, 189);
+                translateButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(189, 189, 189);
+            }
         }
 
         private async void TranslateButton_Click(object sender, EventArgs e)
@@ -104,16 +129,19 @@ namespace TranslateApp
             translateButton.Enabled = false;
             statusLabel.Text = "Çeviriliyor...";
             targetTextBox.Text = "";
+            targetTextBox.ForeColor = System.Drawing.Color.FromArgb(97, 97, 97);
 
             try
             {
                 string translatedText = await translationService.TranslateAsync(sourceTextBox.Text, sourceLang, targetLang);
                 targetTextBox.Text = translatedText;
+                targetTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
                 statusLabel.Text = "Çeviri tamamlandı.";
             }
             catch (Exception ex)
             {
                 targetTextBox.Text = $"Hata: {ex.Message}";
+                targetTextBox.ForeColor = System.Drawing.Color.FromArgb(211, 47, 47);
                 statusLabel.Text = "Çeviri hatası oluştu.";
                 MessageBox.Show($"Çeviri sırasında bir hata oluştu:\n{ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -132,7 +160,20 @@ namespace TranslateApp
             sourceLanguageCombo.SelectedItem = targetLang;
             targetLanguageCombo.SelectedItem = sourceLang;
             sourceTextBox.Text = targetTextBox.Text;
-            targetTextBox.Text = sourceText;
+            
+            if (string.IsNullOrWhiteSpace(targetTextBox.Text) || targetTextBox.Text == "Çeviri sonucu burada görünecek...")
+            {
+                targetTextBox.Text = sourceText;
+                targetTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+            }
+            else
+            {
+                targetTextBox.Text = sourceText;
+                if (!string.IsNullOrWhiteSpace(sourceText))
+                {
+                    targetTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                }
+            }
         }
     }
 }
