@@ -9,7 +9,6 @@ namespace TranslateApp
         private System.Windows.Forms.Button swapButton;
         private System.Windows.Forms.TextBox sourceTextBox;
         private System.Windows.Forms.TextBox targetTextBox;
-        private System.Windows.Forms.Button translateButton;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
         private System.Windows.Forms.GroupBox sourceGroupBox;
@@ -31,7 +30,6 @@ namespace TranslateApp
             this.sourceLanguageCombo = new System.Windows.Forms.ComboBox();
             this.swapButton = new System.Windows.Forms.Button();
             this.sourceTextBox = new System.Windows.Forms.TextBox();
-            this.translateButton = new System.Windows.Forms.Button();
             this.targetGroupBox = new System.Windows.Forms.GroupBox();
             this.targetLanguageCombo = new System.Windows.Forms.ComboBox();
             this.targetTextBox = new System.Windows.Forms.TextBox();
@@ -98,28 +96,11 @@ namespace TranslateApp
             this.sourceTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.sourceTextBox.TextChanged += new System.EventHandler(this.SourceTextBox_TextChanged);
 
-            this.translateButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
-            this.translateButton.FlatAppearance.BorderSize = 0;
-            this.translateButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(101)))), ((int)(((byte)(192)))));
-            this.translateButton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(13)))), ((int)(((byte)(71)))), ((int)(((byte)(161)))));
-            this.translateButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.translateButton.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.translateButton.ForeColor = System.Drawing.Color.White;
-            this.translateButton.Location = new System.Drawing.Point(20, 340);
-            this.translateButton.Name = "translateButton";
-            this.translateButton.Size = new System.Drawing.Size(860, 55);
-            this.translateButton.TabIndex = 2;
-            this.translateButton.Text = "✨ Çevir";
-            this.translateButton.UseVisualStyleBackColor = false;
-            this.translateButton.Enabled = false;
-            this.translateButton.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.translateButton.Click += new System.EventHandler(this.TranslateButton_Click);
-
             this.targetGroupBox.Controls.Add(this.targetLanguageCombo);
             this.targetGroupBox.Controls.Add(this.targetTextBox);
             this.targetGroupBox.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.targetGroupBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(66)))), ((int)(((byte)(66)))));
-            this.targetGroupBox.Location = new System.Drawing.Point(20, 410);
+            this.targetGroupBox.Location = new System.Drawing.Point(20, 340);
             this.targetGroupBox.Name = "targetGroupBox";
             this.targetGroupBox.Padding = new System.Windows.Forms.Padding(15, 20, 15, 15);
             this.targetGroupBox.Size = new System.Drawing.Size(860, 240);
@@ -169,7 +150,6 @@ namespace TranslateApp
             this.ClientSize = new System.Drawing.Size(900, 690);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.targetGroupBox);
-            this.Controls.Add(this.translateButton);
             this.Controls.Add(this.sourceGroupBox);
             this.Controls.Add(this.titleLabel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
