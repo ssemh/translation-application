@@ -13,6 +13,7 @@ namespace TranslateApp
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
         private System.Windows.Forms.GroupBox sourceGroupBox;
         private System.Windows.Forms.GroupBox targetGroupBox;
+        private System.Windows.Forms.Button themeButton;
 
         protected override void Dispose(bool disposing)
         {
@@ -35,6 +36,7 @@ namespace TranslateApp
             this.targetTextBox = new System.Windows.Forms.TextBox();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.themeButton = new System.Windows.Forms.Button();
             this.sourceGroupBox.SuspendLayout();
             this.targetGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -61,6 +63,7 @@ namespace TranslateApp
             this.sourceGroupBox.TabIndex = 1;
             this.sourceGroupBox.TabStop = false;
             this.sourceGroupBox.Text = "📝 Kaynak Metin";
+            this.sourceGroupBox.Paint += new System.Windows.Forms.PaintEventHandler(this.GroupBox_Paint);
 
             this.sourceLanguageCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.sourceLanguageCombo.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
@@ -69,6 +72,8 @@ namespace TranslateApp
             this.sourceLanguageCombo.Name = "sourceLanguageCombo";
             this.sourceLanguageCombo.Size = new System.Drawing.Size(220, 28);
             this.sourceLanguageCombo.TabIndex = 0;
+            this.sourceLanguageCombo.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.sourceLanguageCombo.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ComboBox_DrawItem);
             this.sourceLanguageCombo.SelectedIndexChanged += new System.EventHandler(this.SourceLanguageCombo_SelectedIndexChanged);
 
             this.swapButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
@@ -107,6 +112,7 @@ namespace TranslateApp
             this.targetGroupBox.TabIndex = 3;
             this.targetGroupBox.TabStop = false;
             this.targetGroupBox.Text = "📄 Çeviri Sonucu";
+            this.targetGroupBox.Paint += new System.Windows.Forms.PaintEventHandler(this.GroupBox_Paint);
 
             this.targetLanguageCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.targetLanguageCombo.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
@@ -115,6 +121,8 @@ namespace TranslateApp
             this.targetLanguageCombo.Name = "targetLanguageCombo";
             this.targetLanguageCombo.Size = new System.Drawing.Size(220, 28);
             this.targetLanguageCombo.TabIndex = 0;
+            this.targetLanguageCombo.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.targetLanguageCombo.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.ComboBox_DrawItem);
             this.targetLanguageCombo.SelectedIndexChanged += new System.EventHandler(this.TargetLanguageCombo_SelectedIndexChanged);
 
             this.targetTextBox.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
@@ -144,10 +152,26 @@ namespace TranslateApp
             this.statusLabel.Size = new System.Drawing.Size(40, 19);
             this.statusLabel.Text = "Hazır";
 
+            this.themeButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
+            this.themeButton.FlatAppearance.BorderSize = 0;
+            this.themeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(21)))), ((int)(((byte)(101)))), ((int)(((byte)(192)))));
+            this.themeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.themeButton.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.themeButton.ForeColor = System.Drawing.Color.White;
+            this.themeButton.Location = new System.Drawing.Point(800, 20);
+            this.themeButton.Name = "themeButton";
+            this.themeButton.Size = new System.Drawing.Size(80, 35);
+            this.themeButton.TabIndex = 5;
+            this.themeButton.Text = "🌙 Koyu";
+            this.themeButton.UseVisualStyleBackColor = false;
+            this.themeButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.themeButton.Click += new System.EventHandler(this.ThemeButton_Click);
+
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(900, 690);
+            this.Controls.Add(this.themeButton);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.targetGroupBox);
             this.Controls.Add(this.sourceGroupBox);

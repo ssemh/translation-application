@@ -1,17 +1,32 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using System.Drawing;
 
 namespace TranslateApp
 {
     public partial class Form1 : Form
     {
+        [DllImport("uxtheme.dll", EntryPoint = "#95", CharSet = CharSet.Unicode)]
+        private static extern uint SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+        private const uint WM_THEMECHANGED = 0x031A;
+
         private TranslationService translationService = null!;
         private Dictionary<string, string> languages = null!;
         private System.Windows.Forms.Timer autoTranslateTimer = null!;
         private bool isTranslating = false;
         private bool isInitializing = true;
         private bool isAutoTranslate = false;
+        private bool isDarkTheme = false;
 
         public Form1()
         {
@@ -20,12 +35,77 @@ namespace TranslateApp
             InitializeLanguages();
             LoadLanguages();
             InitializeAutoTranslateTimer();
+            InitializeScrollbarTheme();
+        }
+
+        private void InitializeScrollbarTheme()
+        {
+            sourceTextBox.HandleCreated += TextBox_HandleCreated;
+            targetTextBox.HandleCreated += TextBox_HandleCreated;
+        }
+
+        private void TextBox_HandleCreated(object? sender, EventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                UpdateScrollbarTheme(textBox);
+            }
+        }
+
+        private void UpdateScrollbarTheme(TextBox textBox)
+        {
+            if (textBox.IsHandleCreated)
+            {
+                if (isDarkTheme)
+                {
+                    SetWindowTheme(textBox.Handle, "DarkMode_Explorer", null);
+                }
+                else
+                {
+                    SetWindowTheme(textBox.Handle, "", null);
+                }
+            }
+        }
+
+
+        private void GroupBox_Paint(object sender, PaintEventArgs e)
+        {
+            GroupBox groupBox = sender as GroupBox ?? throw new InvalidOperationException();
+            
+            using (SolidBrush brush = new SolidBrush(groupBox.BackColor))
+            {
+                e.Graphics.FillRectangle(brush, groupBox.ClientRectangle);
+            }
+            
+            SizeF textSize = e.Graphics.MeasureString(groupBox.Text, groupBox.Font);
+            int textHeight = (int)textSize.Height;
+            int textWidth = (int)textSize.Width;
+            int titleY = (textHeight / 2);
+            
+            using (SolidBrush brush = new SolidBrush(groupBox.BackColor))
+            {
+                e.Graphics.FillRectangle(brush, 8, 0, textWidth + 4, textHeight);
+            }
+            
+            using (SolidBrush textBrush = new SolidBrush(groupBox.ForeColor))
+            {
+                e.Graphics.DrawString(groupBox.Text, groupBox.Font, textBrush, 10, 0);
+            }
+            
+            Color borderColor = isDarkTheme ? Color.FromArgb(70, 70, 70) : Color.FromArgb(200, 200, 200);
+            using (Pen pen = new Pen(borderColor, 1))
+            {
+                e.Graphics.DrawLine(pen, textWidth + 14, titleY, groupBox.Width - 1, titleY);
+                e.Graphics.DrawLine(pen, 0, titleY, 0, groupBox.Height - 1);
+                e.Graphics.DrawLine(pen, groupBox.Width - 1, titleY, groupBox.Width - 1, groupBox.Height - 1);
+                e.Graphics.DrawLine(pen, 0, groupBox.Height - 1, groupBox.Width - 1, groupBox.Height - 1);
+            }
         }
 
         private void InitializeAutoTranslateTimer()
         {
             autoTranslateTimer = new System.Windows.Forms.Timer();
-            autoTranslateTimer.Interval = 1500; // 1.5 saniye bekle
+            autoTranslateTimer.Interval = 1500;
             autoTranslateTimer.Tick += AutoTranslateTimer_Tick;
         }
 
@@ -117,14 +197,12 @@ namespace TranslateApp
 
         private void TriggerAutoTranslate()
         {
-            // Eğer çeviri yapılıyorsa veya metin boşsa otomatik çeviri yapma
             if (isTranslating || string.IsNullOrWhiteSpace(sourceTextBox.Text))
             {
                 autoTranslateTimer.Stop();
                 return;
             }
 
-            // Timer'ı sıfırla ve yeniden başlat (debounce)
             autoTranslateTimer.Stop();
             autoTranslateTimer.Start();
         }
@@ -133,7 +211,6 @@ namespace TranslateApp
         {
             autoTranslateTimer.Stop();
             
-            // Çeviri koşullarını kontrol et
             if (string.IsNullOrWhiteSpace(sourceTextBox.Text) ||
                 sourceLanguageCombo.SelectedItem == null ||
                 targetLanguageCombo.SelectedItem == null)
@@ -149,7 +226,6 @@ namespace TranslateApp
                 return;
             }
 
-            // Otomatik çeviriyi başlat
             isAutoTranslate = true;
             await PerformTranslation();
             isAutoTranslate = false;
@@ -166,13 +242,13 @@ namespace TranslateApp
             isTranslating = true;
             statusLabel.Text = "Çeviriliyor...";
             targetTextBox.Text = "";
-            targetTextBox.ForeColor = System.Drawing.Color.FromArgb(97, 97, 97);
+            targetTextBox.ForeColor = isDarkTheme ? System.Drawing.Color.FromArgb(150, 150, 150) : System.Drawing.Color.FromArgb(97, 97, 97);
 
             try
             {
                 string translatedText = await translationService.TranslateAsync(sourceTextBox.Text, sourceLang, targetLang);
                 targetTextBox.Text = translatedText;
-                targetTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                targetTextBox.ForeColor = isDarkTheme ? System.Drawing.Color.FromArgb(220, 220, 220) : System.Drawing.Color.FromArgb(33, 33, 33);
                 statusLabel.Text = "Çeviri tamamlandı.";
             }
             catch (Exception ex)
@@ -202,18 +278,152 @@ namespace TranslateApp
             if (string.IsNullOrWhiteSpace(targetTextBox.Text) || targetTextBox.Text == "Çeviri sonucu burada görünecek...")
             {
                 targetTextBox.Text = sourceText;
-                targetTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                targetTextBox.ForeColor = isDarkTheme ? System.Drawing.Color.FromArgb(220, 220, 220) : System.Drawing.Color.FromArgb(33, 33, 33);
             }
             else
             {
                 targetTextBox.Text = sourceText;
                 if (!string.IsNullOrWhiteSpace(sourceText))
                 {
-                    targetTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                    targetTextBox.ForeColor = isDarkTheme ? System.Drawing.Color.FromArgb(220, 220, 220) : System.Drawing.Color.FromArgb(33, 33, 33);
+                }
+            }
+        }
+
+        private void ThemeButton_Click(object sender, EventArgs e)
+        {
+            isDarkTheme = !isDarkTheme;
+            ApplyTheme();
+        }
+
+        private void ApplyTheme()
+        {
+            if (isDarkTheme)
+            {
+                this.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+                this.titleLabel.ForeColor = System.Drawing.Color.FromArgb(100, 181, 246);
+                
+                this.sourceGroupBox.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+                this.sourceGroupBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+                this.targetGroupBox.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+                this.targetGroupBox.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+                
+                this.sourceTextBox.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
+                this.sourceTextBox.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+                this.targetTextBox.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
+                this.targetTextBox.ForeColor = System.Drawing.Color.FromArgb(180, 180, 180);
+                
+                this.sourceLanguageCombo.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
+                this.sourceLanguageCombo.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+                this.targetLanguageCombo.BackColor = System.Drawing.Color.FromArgb(37, 37, 38);
+                this.targetLanguageCombo.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+                
+                this.statusStrip.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+                this.statusLabel.ForeColor = System.Drawing.Color.FromArgb(200, 200, 200);
+                
+                this.swapButton.BackColor = System.Drawing.Color.FromArgb(0, 122, 204);
+                this.swapButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(0, 101, 170);
+                this.themeButton.Text = "☀️ Açık";
+
+                try
+                {
+                    int darkMode = 1;
+                    DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+                }
+                catch { }
+
+                if (this.sourceTextBox.IsHandleCreated)
+                {
+                    UpdateScrollbarTheme(this.sourceTextBox);
+                    SendMessage(this.sourceTextBox.Handle, WM_THEMECHANGED, IntPtr.Zero, IntPtr.Zero);
+                    this.sourceTextBox.Invalidate();
+                }
+                if (this.targetTextBox.IsHandleCreated)
+                {
+                    UpdateScrollbarTheme(this.targetTextBox);
+                    SendMessage(this.targetTextBox.Handle, WM_THEMECHANGED, IntPtr.Zero, IntPtr.Zero);
+                    this.targetTextBox.Invalidate();
+                }
+            }
+            else
+            {
+                this.BackColor = System.Drawing.Color.FromArgb(250, 250, 250);
+                this.titleLabel.ForeColor = System.Drawing.Color.FromArgb(25, 118, 210);
+                
+                this.sourceGroupBox.BackColor = System.Drawing.Color.White;
+                this.sourceGroupBox.ForeColor = System.Drawing.Color.FromArgb(66, 66, 66);
+                this.targetGroupBox.BackColor = System.Drawing.Color.White;
+                this.targetGroupBox.ForeColor = System.Drawing.Color.FromArgb(66, 66, 66);
+                
+                this.sourceTextBox.BackColor = System.Drawing.Color.White;
+                this.sourceTextBox.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                this.targetTextBox.BackColor = System.Drawing.Color.FromArgb(250, 250, 250);
+                this.targetTextBox.ForeColor = System.Drawing.Color.FromArgb(97, 97, 97);
+                
+                this.sourceLanguageCombo.BackColor = System.Drawing.Color.White;
+                this.sourceLanguageCombo.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                this.targetLanguageCombo.BackColor = System.Drawing.Color.White;
+                this.targetLanguageCombo.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
+                
+                this.statusStrip.BackColor = System.Drawing.Color.FromArgb(250, 250, 250);
+                this.statusLabel.ForeColor = System.Drawing.Color.FromArgb(66, 66, 66);
+                
+                this.swapButton.BackColor = System.Drawing.Color.FromArgb(25, 118, 210);
+                this.swapButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(21, 101, 192);
+                this.themeButton.Text = "🌙 Koyu";
+
+                try
+                {
+                    int darkMode = 0;
+                    DwmSetWindowAttribute(this.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+                }
+                catch { }
+
+                if (this.sourceTextBox.IsHandleCreated)
+                {
+                    UpdateScrollbarTheme(this.sourceTextBox);
+                    SendMessage(this.sourceTextBox.Handle, WM_THEMECHANGED, IntPtr.Zero, IntPtr.Zero);
+                    this.sourceTextBox.Invalidate();
+                }
+                if (this.targetTextBox.IsHandleCreated)
+                {
+                    UpdateScrollbarTheme(this.targetTextBox);
+                    SendMessage(this.targetTextBox.Handle, WM_THEMECHANGED, IntPtr.Zero, IntPtr.Zero);
+                    this.targetTextBox.Invalidate();
                 }
             }
 
-            // Dil değiştiğinde otomatik çeviri tetiklenecek (SelectedIndexChanged event'i sayesinde)
+            this.sourceGroupBox.Invalidate();
+            this.targetGroupBox.Invalidate();
+        }
+
+        private void ComboBox_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0) return;
+
+            ComboBox comboBox = sender as ComboBox ?? throw new InvalidOperationException();
+            
+            e.DrawBackground();
+            
+            System.Drawing.Brush brush;
+            if (isDarkTheme)
+            {
+                brush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(220, 220, 220));
+                e.Graphics.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(37, 37, 38)), e.Bounds);
+            }
+            else
+            {
+                brush = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(33, 33, 33));
+                e.Graphics.FillRectangle(new System.Drawing.SolidBrush(System.Drawing.Color.White), e.Bounds);
+            }
+
+            if (e.Index < comboBox.Items.Count)
+            {
+                e.Graphics.DrawString(comboBox.Items[e.Index].ToString(), e.Font, brush, e.Bounds, System.Drawing.StringFormat.GenericDefault);
+            }
+
+            e.DrawFocusRectangle();
+            brush.Dispose();
         }
     }
 }
